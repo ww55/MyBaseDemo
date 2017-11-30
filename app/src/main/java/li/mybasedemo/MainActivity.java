@@ -3,29 +3,25 @@ package li.mybasedemo;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Environment;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import base.BaseActivity;
-import base.BaseRecyclerView;
 import util.FileUtil;
 
 public class MainActivity extends BaseActivity {
     private RecyclerView myRview;
     private List<String> data;
-    private BaseRecyclerView baseRecyclerView;
+    private MyAdapter baseRecyclerViewAdapter;
     private FileUtil fileUtil;
+    private List<Integer> layoutIds;
     private static final String[] NEEDPERMISSION = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private static final int REQUESTCODE = 8;
 
@@ -43,34 +39,16 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void initData() {
         data = new ArrayList<>();
-        fileUtil = FileUtil.getInstance(this);
-        String text = getMimeType(new File(Environment.getExternalStorageDirectory(), "test.jpg"));
+        layoutIds = new ArrayList<>();
+        layoutIds.add(R.layout.layout_rvitme);
+        layoutIds.add(R.layout.layout_image);
         for (int i = 0; i < 100; i++) {
-            data.add(text + " " + i);
+            data.add("sssss " + i);
         }
-        baseRecyclerView = new BaseRecyclerView(data, MainActivity.this, R.layout.layout_rvitme) {
-
-            @Override
-            protected void clickView(BaseViewHolder baseViewHolder, Object o, final int pos) {
-                ((CheckBox) baseViewHolder.getViewById(R.id.cbChoose)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                        Log.d("zww", Environment.getExternalStorageDirectory().getAbsolutePath());
-
-                        fileUtil.shareFile(new File(Environment.getExternalStorageDirectory(), "test.png"));
-                    }
-                });
-            }
-
-            @Override
-            protected void setItmeData(BaseViewHolder baseViewHolder, Object itmeModule) throws ClassCastException {
-                String content = (String) itmeModule;
-                baseViewHolder.setText(R.id.tvText, content);
-            }
-        };
+        baseRecyclerViewAdapter = new MyAdapter(data, this, layoutIds);
         myRview.setLayoutManager(new LinearLayoutManager(this));
         myRview.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        myRview.setAdapter(baseRecyclerView);
+        myRview.setAdapter(baseRecyclerViewAdapter);
     }
 
     @Override

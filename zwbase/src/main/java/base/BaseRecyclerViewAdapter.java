@@ -2,11 +2,13 @@ package base;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -17,20 +19,17 @@ import java.util.List;
  * 创建人: Administrator
  * 功能描述:RecyclerView基类(需要注意类型转换问题)
  */
-public abstract class BaseRecyclerView extends RecyclerView.Adapter<BaseRecyclerView.BaseViewHolder> {
-    private ArrayList data;
-    private Context context;
-    private int LayoutId;
+public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseRecyclerViewAdapter.BaseViewHolder> {
+    protected ArrayList data;
+    protected Context context;
+    protected List<Integer> layoutIds;//布局集合
 
-    private BaseRecyclerView() {
-        super();
-    }
-
-    public BaseRecyclerView(List data, Context context, int layoutId) {
+    public BaseRecyclerViewAdapter(List data, Context context, List<Integer> layoutIds) {
         this.data = new ArrayList<>();
+        this.layoutIds = new ArrayList<>();
         this.data.addAll(data);
+        this.layoutIds.addAll(layoutIds);
         this.context = context;
-        this.LayoutId = layoutId;
     }
 
     public void setData(List data) {
@@ -63,11 +62,24 @@ public abstract class BaseRecyclerView extends RecyclerView.Adapter<BaseRecycler
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int pos) {
-        View view = LayoutInflater.from(context).inflate(LayoutId, parent, false);
+        int layout = getLayoutIdByPos(pos);
+        View view = LayoutInflater.from(context).inflate(layout, parent, false);
         BaseViewHolder baseViewHolder = new BaseViewHolder(view);
-        clickView(baseViewHolder, data.get(pos), pos);//在onCreateViewHolder方法里设置按钮监听事件,防止在onBindViewHolder中多次调用，性能优化
+        clickView(baseViewHolder, data.get(pos), pos);
         return baseViewHolder;
     }
+
+    protected int getLayoutIdByPos(int pos) {
+        int res = 0;
+        if (pos < layoutIds.size()) {//layoutIds是存放布局的集合
+            res = layoutIds.get(pos);
+        } else {
+            res = layoutIds.get(pos % layoutIds.size());
+
+        }
+        return res;
+    }
+
 
     /**
      * 在oncreateViewHolder方法中设置点击事件
@@ -79,12 +91,13 @@ public abstract class BaseRecyclerView extends RecyclerView.Adapter<BaseRecycler
      */
     protected abstract void clickView(BaseViewHolder baseViewHolder, Object o, int pos);
 
-    protected abstract void setItmeData(BaseViewHolder baseViewHolder, Object itmeModule) throws ClassCastException;
+    protected abstract void setItmeData(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException;
 
     @Override
     public void onBindViewHolder(BaseViewHolder holder, int position) {
         try {
-            setItmeData(holder, data.get(position));
+            Log.d("zww", "p " + position);
+            setItmeData(holder, data.get(position), position);
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
@@ -117,6 +130,11 @@ public abstract class BaseRecyclerView extends RecyclerView.Adapter<BaseRecycler
 
         public void setCheckChangeListen(int viewId, CompoundButton.OnCheckedChangeListener onCheckedChangeListener) {
             ((CheckBox) getViewById(viewId)).setOnCheckedChangeListener(onCheckedChangeListener);
+        }
+
+        public void setImageSource(int imageViewId, int sourceId) {
+            ImageView imageView = (ImageView) getViewById(imageViewId);
+            imageView.setImageResource(sourceId);
         }
 
         public View getViewById(int viewId) {

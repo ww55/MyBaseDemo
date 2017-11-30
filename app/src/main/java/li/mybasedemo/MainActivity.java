@@ -50,44 +50,24 @@ public class MainActivity extends BaseActivity {
         myRview.setFresh(new ZwFreshenView.Fresh() {
             @Override
             public void onReFresh() {
-                new Thread() {
-                    public void run() {
-                        super.run();
-                        data.clear();
-                        for (int i = 10; i < 20; i++) {
-                            data.add("sssss " + i);
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
 
-                                myRview.setData(data);
-                            }
-                        });
-                    }
-                }.start();
+                data.clear();
+                for (int i = 10; i < 20; i++) {
+                    data.add("sssss " + i);
+                }
+                myRview.setData(data);
             }
 
             @Override
             public void onLoadMore() {
-                new Thread() {
-                    public void run() {
-                        super.run();
-                        data.clear();
-                        if (c < 3) {
-                            for (int i = 20; i < 25; i++) {
-                                data.add("sssss " + i);
-                            }
-                            c++;
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                myRview.addData(data);
-                            }
-                        });
+                data.clear();
+                if (c < 3) {
+                    for (int i = 20; i < 25; i++) {
+                        data.add("sssss " + i);
                     }
-                }.start();
+                    c++;
+                }
+                myRview.addData(data);
             }
         });
         myRview.initDataToView(data, baseRecyclerViewAdapter);

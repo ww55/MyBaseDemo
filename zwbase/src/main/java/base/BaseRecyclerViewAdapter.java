@@ -65,23 +65,24 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
     @Override
     public int getItemViewType(int position) {
         if (position + 1 == getItemCount()) {
-            return -1;
+            return -1;//最后行时设为-1显示footLayout
         } else {
-            return position;
+            return position;//其他设为位置
         }
 
     }
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int pos) {
-        if (data.size() == 0) {
+        if (data.size() == 0) {//当data数据为0时
             View view = LayoutInflater.from(context).inflate(R.layout.zwbase_no_data, parent, false);
+            //显示暂无数据布局
             return new BaseViewHolder(view);
         }
-        if (pos == -1) {
+        if (pos == -1) {//pos为-1表示最后一行
             View view = LayoutInflater.from(context).inflate(R.layout.zwbase_footlayout, parent, false);
+            //显示底部布局
             return new FootViewHolder(view);
-
         }
         int layout = getLayoutIdByPos(pos);
         View view = LayoutInflater.from(context).inflate(layout, parent, false);
@@ -96,7 +97,6 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
             res = layoutIds.get(pos);
         } else {
             res = layoutIds.get(pos % layoutIds.size());
-
         }
         return res;
     }
@@ -123,18 +123,18 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
             return;
         }
         if (holder instanceof FootViewHolder) {
-            if (isMore) {
+            //判断为底部布局时
+            if (isMore) {//再次判断是否还有更多数据,加载相应的布局
                 holder.getViewById(R.id.loadmore).setVisibility(View.VISIBLE);
                 holder.getViewById(R.id.nodata).setVisibility(View.GONE);
             } else {
                 holder.getViewById(R.id.loadmore).setVisibility(View.GONE);
                 holder.getViewById(R.id.nodata).setVisibility(View.VISIBLE);
-
             }
             return;
         }
         try {
-            setItmeData(holder, data.get(position), position);
+            setItmeData(holder, data.get(position), position);//设置显示数据
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
@@ -146,10 +146,11 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
 
     @Override
     public int getItemCount() {
-        return data == null ? 0 : data.size() + 1;
+        return data == null ? 0 : data.size() + 1;//数据为0或为空时返回0，否则data.size()+1
     }
 
     public void setMore(boolean more) {
+        //暴露方法给Activity
         this.isMore = more;
     }
 
@@ -160,6 +161,7 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
     }
 
     public class BaseViewHolder extends RecyclerView.ViewHolder {
+        //该类下部分方法可以自行添加
         View rootView;
 
         public BaseViewHolder(View itemView) {

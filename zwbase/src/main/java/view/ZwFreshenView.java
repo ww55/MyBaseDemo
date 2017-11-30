@@ -1,6 +1,8 @@
 package view;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DividerItemDecoration;
@@ -29,7 +31,10 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
     private Fresh fresh;
     private Context context;
     private T t;
-
+    private Handler handler;
+    private static final int REFRESH = 33;
+    private static final int LOADMORE = 44;
+    private Message message;
 
     public ZwFreshenView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -52,6 +57,30 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
     }
 
     private void initEvent() {
+        handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                List data = (List) msg.obj;
+                switch (msg.what) {
+                    case LOADMORE:
+                        if (data.size() == 0 || data == null) {
+                            Log.d("zww", "add o data");
+                            t.setMore(false);
+                            t.notifyDataSetChanged();
+                            return;
+                        }
+                        t.addDatas(data);
+                        break;
+                    case REFRESH:
+                        rvMyDataView.setAdapter(t);
+                        t.setData(data);
+                        slReFreshView.setRefreshing(false);
+                        break;
+                }
+            }
+        };
+        slReFreshView.setRefreshing(true);
         slReFreshView.setOnRefreshListener(this);
         rvMyDataView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -59,7 +88,12 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
                 super.onScrollStateChanged(recyclerView, newState);
                 if (isSlideToBottom(recyclerView) && newState == 0
                         ) {
-                    fresh.onLoadMore();
+                    new Thread() {
+                        public void run() {
+                            super.run();
+                            fresh.onLoadMore();
+                        }
+                    }.start();
                 }
             }
         });
@@ -67,20 +101,29 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
 
     @Override
     public void onRefresh() {
-        fresh.onReFresh();
-        t.setMore(true);
+        new Thread() {
+            public void run() {
+                super.run();
+                fresh.onReFresh();
+                t.setMore(true);
+            }
+        }.start();
     }
 
     public void initDataToView(List data, T t) {
         this.t = t;
         rvMyDataView.setAdapter(t);
-        this.t.setData(data);
+        t.setData(data);
+        slReFreshView.setRefreshing(false);
     }
 
     public void setData(List data) {
         try {
             this.t.setData(data);
-            slReFreshView.setRefreshing(false);
+            message = new Message();
+            message.obj = data;
+            message.what = REFRESH;
+            handler.sendMessage(message);
         } catch (NullPointerException e) {
             Log.d("zww", "适配器为空");
         } catch (ClassCastException e) {
@@ -89,13 +132,10 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
     }
 
     public void addData(List data) {
-        if (data.size() == 0 || data == null) {
-            Log.d("zww", "add o data");
-            t.setMore(false);
-            t.notifyDataSetChanged();
-            return;
-        }
-        t.addDatas(data);
+        message = new Message();
+        message.obj = data;
+        message.what = LOADMORE;
+        handler.sendMessage(message);
     }
 
     public interface Fresh {

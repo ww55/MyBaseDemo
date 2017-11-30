@@ -25,15 +25,22 @@ public class MyAdapter extends BaseRecyclerViewAdapter {
 
     @Override
     protected void setItmeData(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException {
-        int layoutNum = (position % layoutIds.size());
+        if (!(baseViewHolder instanceof FootViewHolder)) {
+            int layoutNum = (position % layoutIds.size());
+            switch (layoutNum) {
+                case 0:
+                    baseViewHolder.setText(R.id.tvText, (String) itmeModule);
+                    break;
+                case 1:
+                    baseViewHolder.setImageSource(R.id.ivImage, R.mipmap.image);
+                    break;
+                case 2:
+                    baseViewHolder.setText(R.id.tvText, "aaaa " + position);
+                    break;
 
-        switch (layoutNum) {
-            case 0:
-                baseViewHolder.setText(R.id.tvText, (String) itmeModule);
-                break;
-            case 1:
-                baseViewHolder.setImageSource(R.id.ivImage, R.mipmap.image);
-                break;
+            }
         }
     }
+
 }
+

@@ -2,7 +2,6 @@ package base;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +13,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import li.zwbase.R;
+
 /**
  * 创建时间: 2017/11/29
  * 创建人: Administrator
@@ -23,6 +24,7 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
     protected ArrayList data;
     protected Context context;
     protected List<Integer> layoutIds;//布局集合
+    protected boolean isMore = true;//上拉刷新时，是否有更多数据
 
     public BaseRecyclerViewAdapter(List data, Context context, List<Integer> layoutIds) {
         this.data = new ArrayList<>();
@@ -55,13 +57,32 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         notifyDataSetChanged();
     }
 
+    public void addDatas(List data) {
+        this.data.addAll(data);
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemViewType(int position) {
-        return position;
+        if (position + 1 == getItemCount()) {
+            return -1;
+        } else {
+            return position;
+        }
+
     }
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int pos) {
+        if (data.size() == 0) {
+            View view = LayoutInflater.from(context).inflate(R.layout.zwbase_no_data, parent, false);
+            return new BaseViewHolder(view);
+        }
+        if (pos == -1) {
+            View view = LayoutInflater.from(context).inflate(R.layout.zwbase_footlayout, parent, false);
+            return new FootViewHolder(view);
+
+        }
         int layout = getLayoutIdByPos(pos);
         View view = LayoutInflater.from(context).inflate(layout, parent, false);
         BaseViewHolder baseViewHolder = new BaseViewHolder(view);
@@ -95,17 +116,47 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
 
     @Override
     public void onBindViewHolder(BaseViewHolder holder, int position) {
+        if (data.size() == 0) {
+            ImageView nodataImage = (ImageView) holder.getViewById(R.id.zwbase_imageview);
+            TextView nodataText = (TextView) holder.getViewById(R.id.zwbase_tvNoData);
+            setNodataInfo(nodataImage, nodataText);
+            return;
+        }
+        if (holder instanceof FootViewHolder) {
+            if (isMore) {
+                holder.getViewById(R.id.loadmore).setVisibility(View.VISIBLE);
+                holder.getViewById(R.id.nodata).setVisibility(View.GONE);
+            } else {
+                holder.getViewById(R.id.loadmore).setVisibility(View.GONE);
+                holder.getViewById(R.id.nodata).setVisibility(View.VISIBLE);
+
+            }
+            return;
+        }
         try {
-            Log.d("zww", "p " + position);
             setItmeData(holder, data.get(position), position);
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
     }
 
+    protected void setNodataInfo(ImageView nodataImage, TextView nodataText) {
+    }
+
+
     @Override
     public int getItemCount() {
-        return data.size();
+        return data == null ? 0 : data.size() + 1;
+    }
+
+    public void setMore(boolean more) {
+        this.isMore = more;
+    }
+
+    protected class FootViewHolder extends BaseViewHolder {
+        public FootViewHolder(View itemView) {
+            super(itemView);
+        }
     }
 
     public class BaseViewHolder extends RecyclerView.ViewHolder {

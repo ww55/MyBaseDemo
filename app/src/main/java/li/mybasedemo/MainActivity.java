@@ -34,12 +34,15 @@ public class MainActivity extends BaseActivity {
 
     }
 
+    int c = 0;
+
     @Override
     protected void initData() {
         data = new ArrayList<>();
         layoutIds = new ArrayList<>();
         layoutIds.add(R.layout.layout_rvitme);
         layoutIds.add(R.layout.layout_image);
+        layoutIds.add(R.layout.layout_rvitme);
         for (int i = 0; i < 10; i++) {
             data.add("sssss " + i);
         }
@@ -51,12 +54,13 @@ public class MainActivity extends BaseActivity {
                     public void run() {
                         super.run();
                         data.clear();
-                        for (int i = 11; i < 20; i++) {
+                        for (int i = 10; i < 20; i++) {
                             data.add("sssss " + i);
                         }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+
                                 myRview.setData(data);
                             }
                         });
@@ -66,7 +70,24 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onLoadMore() {
-
+                new Thread() {
+                    public void run() {
+                        super.run();
+                        data.clear();
+                        if (c < 3) {
+                            for (int i = 20; i < 25; i++) {
+                                data.add("sssss " + i);
+                            }
+                            c++;
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                myRview.addData(data);
+                            }
+                        });
+                    }
+                }.start();
             }
         });
         myRview.initDataToView(data, baseRecyclerViewAdapter);

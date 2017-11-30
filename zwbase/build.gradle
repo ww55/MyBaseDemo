@@ -44,7 +44,7 @@ publish {
     groupId = 'com.zwbase'//项目包名
     artifactId = 'zwbase'//在Jfrog上新建项目名称（包名，不是仓库名）
     publishVersion = '1.0.1'//在Jfrog上新建时的版本号
-    desc = 'some base class'//描述，不重要
+    desc = 'some zwbase.base class'//描述，不重要
     website = siteUrl//项目主页
 }
 tasks.withType(Javadoc) {//防止编码问题

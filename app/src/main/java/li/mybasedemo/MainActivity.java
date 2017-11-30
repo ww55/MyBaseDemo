@@ -3,9 +3,6 @@ package li.mybasedemo;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 
@@ -15,9 +12,10 @@ import java.util.List;
 
 import base.BaseActivity;
 import util.FileUtil;
+import view.ZwFreshenView;
 
 public class MainActivity extends BaseActivity {
-    private RecyclerView myRview;
+    private view.ZwFreshenView myRview;
     private List<String> data;
     private MyAdapter baseRecyclerViewAdapter;
     private FileUtil fileUtil;
@@ -42,13 +40,37 @@ public class MainActivity extends BaseActivity {
         layoutIds = new ArrayList<>();
         layoutIds.add(R.layout.layout_rvitme);
         layoutIds.add(R.layout.layout_image);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             data.add("sssss " + i);
         }
         baseRecyclerViewAdapter = new MyAdapter(data, this, layoutIds);
-        myRview.setLayoutManager(new LinearLayoutManager(this));
-        myRview.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-        myRview.setAdapter(baseRecyclerViewAdapter);
+        myRview.setFresh(new ZwFreshenView.Fresh() {
+            @Override
+            public void onReFresh() {
+                new Thread() {
+                    public void run() {
+                        super.run();
+                        data.clear();
+                        for (int i = 11; i < 20; i++) {
+                            data.add("sssss " + i);
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                myRview.setData(data);
+                            }
+                        });
+                    }
+                }.start();
+            }
+
+            @Override
+            public void onLoadMore() {
+
+            }
+        });
+        myRview.initDataToView(data, baseRecyclerViewAdapter);
+
     }
 
     @Override

@@ -3,6 +3,7 @@ package base;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -14,7 +15,7 @@ import util.ToastUtil;
  * 功能描述:基类Activity
  */
 
-public abstract class BaseActivity extends Activity {
+public abstract class BaseActivity extends Activity implements View.OnClickListener {
     private int layoutId;
     private ToastUtil toastUtil;
 
@@ -38,6 +39,7 @@ public abstract class BaseActivity extends Activity {
 
     /**
      * 显示提示信息
+     *
      * @param sourceId 资源Id
      */
     public void showToast(int sourceId) {
@@ -46,6 +48,7 @@ public abstract class BaseActivity extends Activity {
 
     /**
      * 显示对话框
+     *
      * @param content 显示内容
      */
     public void showToast(String content) {

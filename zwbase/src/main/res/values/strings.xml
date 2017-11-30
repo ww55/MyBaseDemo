@@ -1,3 +1,5 @@
 <resources>
     <string name="zwbase_app_name">ZwBase</string>
+    <string name="zwbase_no_permission">暂无文件读写权限</string>
+    <string name="zwbase_no_file">文件不存在</string>
 </resources>

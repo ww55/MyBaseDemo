@@ -8,7 +8,7 @@
 4 FileUtil
 5 SharePreferencesUtil
 6 ToastUtil
-导入：compile 'com.zwbase:zwbase:1.0.0'
-2017/11/30 新增 打开 分享文件 功能 支持android5.0以上设备
+导入：compile 'com.zwbase:zwbase:1.0.1'
+2017/11/30 新增 打开 分享文件 功能 支持android5.0以上设备 在android7.0设备上运行时需要配置provider
 
     

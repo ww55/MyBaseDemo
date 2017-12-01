@@ -1,4 +1,4 @@
-package li.mybasedemo;
+package li.mybasedemo.activity;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import base.BaseActivity;
+import li.mybasedemo.R;
+import li.mybasedemo.adapter.MyAdapter;
 import util.FileUtil;
 import view.ZwFreshenView;
 
@@ -41,37 +43,26 @@ public class MainActivity extends BaseActivity {
         data = new ArrayList<>();
         layoutIds = new ArrayList<>();
         layoutIds.add(R.layout.layout_rvitme);
-        layoutIds.add(R.layout.layout_image);
-        layoutIds.add(R.layout.layout_rvitme);
-        for (int i = 0; i < 10; i++) {
-            data.add("sssss " + i);
-        }
+        data.add("简书首页");
         baseRecyclerViewAdapter = new MyAdapter(data, this, layoutIds);
         myRview.setFresh(new ZwFreshenView.Fresh() {
             @Override
             public void onReFresh() {
 
                 data.clear();
-                for (int i = 10; i < 20; i++) {
-                    data.add("sssss " + i);
-                }
                 myRview.setData(data);
             }
 
             @Override
             public void onLoadMore() {
                 data.clear();
-                if (c < 3) {
-                    for (int i = 20; i < 25; i++) {
-                        data.add("sssss " + i);
-                    }
-                    c++;
-                }
+
                 myRview.addData(data);
             }
         });
-        myRview.initDataToView(data, baseRecyclerViewAdapter);
-
+        myRview.initAdapter(baseRecyclerViewAdapter);
+        myRview.canLoadMore(false);
+        myRview.showData();
     }
 
     @Override

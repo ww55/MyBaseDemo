@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MyBaseDemo</string>
+    <string name="auth">简书作者</string>
+    <string name="refreshen">换一批</string>
 </resources>

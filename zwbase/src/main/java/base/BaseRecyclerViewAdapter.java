@@ -2,6 +2,7 @@ package base;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,7 +26,15 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
     protected Context context;
     protected List<Integer> layoutIds;//布局集合
     protected boolean isMore = true;//上拉刷新时，是否有更多数据
+    private boolean canLoad = true;
 
+    /**
+     * 适配器构造方法 #注意List
+     *
+     * @param data      数据集合
+     * @param context   上下文对象
+     * @param layoutIds 布局集合
+     */
     public BaseRecyclerViewAdapter(List data, Context context, List<Integer> layoutIds) {
         this.data = new ArrayList<>();
         this.layoutIds = new ArrayList<>();
@@ -64,16 +73,21 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
 
     @Override
     public int getItemViewType(int position) {
-        if (position + 1 == getItemCount()) {
-            return -1;//最后行时设为-1显示footLayout
+        if (canLoad) {
+            if (position + 1 == getItemCount()) {
+                return -1;//最后行时设为-1显示footLayout
+            } else {
+                return position;//其他设为位置
+            }
         } else {
-            return position;//其他设为位置
+            return position;
         }
 
     }
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int pos) {
+        Log.d("zww", "onCreateViewHolder " + pos);
         if (data.size() == 0) {//当data数据为0时
             View view = LayoutInflater.from(context).inflate(R.layout.zwbase_no_data, parent, false);
             //显示暂无数据布局
@@ -87,10 +101,16 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         int layout = getLayoutIdByPos(pos);
         View view = LayoutInflater.from(context).inflate(layout, parent, false);
         BaseViewHolder baseViewHolder = new BaseViewHolder(view);
-        clickView(baseViewHolder, data.get(pos), pos);
+        onCreate(baseViewHolder, data.get(pos), pos);
         return baseViewHolder;
     }
 
+    /**
+     * 定制要显示的布局
+     *
+     * @param pos 位置
+     * @return 对应顺序下返回的布局
+     */
     protected int getLayoutIdByPos(int pos) {
         int res = 0;
         if (pos < layoutIds.size()) {//layoutIds是存放布局的集合
@@ -110,9 +130,9 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
      * @param o              itme    实体类
      * @param pos            位置
      */
-    protected abstract void clickView(BaseViewHolder baseViewHolder, Object o, int pos);
+    protected abstract void onCreate(BaseViewHolder baseViewHolder, Object o, int pos);
 
-    protected abstract void setItmeData(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException;
+    protected abstract void onBind(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException;
 
     @Override
     public void onBindViewHolder(BaseViewHolder holder, int position) {
@@ -134,7 +154,8 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
             return;
         }
         try {
-            setItmeData(holder, data.get(position), position);//设置显示数据
+
+            onBind(holder, data.get(position), position);//设置显示数据
         } catch (ClassCastException e) {
             e.printStackTrace();
         }
@@ -146,7 +167,8 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
 
     @Override
     public int getItemCount() {
-        return data == null ? 0 : data.size() + 1;//数据为0或为空时返回0，否则data.size()+1
+        if (canLoad) return data == null ? 0 : data.size() + 1;//数据为0或为空时返回0，否则data.size()+1
+        else return data == null ? 0 : data.size();
     }
 
     public void setMore(boolean more) {
@@ -158,6 +180,10 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         public FootViewHolder(View itemView) {
             super(itemView);
         }
+    }
+
+    public void setCanLoad(boolean canLoad) {
+        this.canLoad = canLoad;
     }
 
     public class BaseViewHolder extends RecyclerView.ViewHolder {

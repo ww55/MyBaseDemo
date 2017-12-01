@@ -35,6 +35,8 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
     private static final int REFRESH = 33;
     private static final int LOADMORE = 44;
     private Message message;
+    private LinearLayoutManager linearLayoutManager;
+    private static final int NODATA = 55;
 
     public ZwFreshenView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -53,7 +55,8 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
         slReFreshView = view.findViewById(R.id.slReFreshView);
         rvMyDataView = view.findViewById(R.id.rvMyDataView);
         rvMyDataView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-        rvMyDataView.setLayoutManager(new LinearLayoutManager(context));
+        linearLayoutManager = new LinearLayoutManager(context);
+        rvMyDataView.setLayoutManager(linearLayoutManager);
     }
 
     private void initEvent() {
@@ -61,11 +64,14 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
+                if (msg.what == NODATA) {
+                    slReFreshView.setRefreshing(false);
+                    return;
+                }
                 List data = (List) msg.obj;
                 switch (msg.what) {
                     case LOADMORE:
                         if (data.size() == 0 || data == null) {
-                            Log.d("zww", "add o data");
                             t.setMore(false);
                             t.notifyDataSetChanged();
                             return;
@@ -73,10 +79,11 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
                         t.addDatas(data);
                         break;
                     case REFRESH:
-                        rvMyDataView.setAdapter(t);
-                        t.setData(data);
                         slReFreshView.setRefreshing(false);
+                        if (data != null)
+                            t.setData(data);
                         break;
+
                 }
             }
         };
@@ -91,7 +98,10 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
                     new Thread() {
                         public void run() {
                             super.run();
-                            fresh.onLoadMore();
+                            Log.d("zww", "zwfreshen loadmore");
+
+                            if (fresh != null)
+                                fresh.onLoadMore();
                         }
                     }.start();
                 }
@@ -101,6 +111,7 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
 
     @Override
     public void onRefresh() {
+        Log.d("zww", "zw onRefresh");
         new Thread() {
             public void run() {
                 super.run();
@@ -110,22 +121,53 @@ public class ZwFreshenView<T extends BaseRecyclerViewAdapter> extends LinearLayo
         }.start();
     }
 
-    public void initDataToView(List data, T t) {
+    public void initAdapter(T t) {
         this.t = t;
-        rvMyDataView.setAdapter(t);
-        t.setData(data);
         slReFreshView.setRefreshing(false);
     }
 
+    public void showData() {
+        if (t != null) {
+            Log.d("zww", "t size " + t.getItemCount());
+            rvMyDataView.setAdapter(t);
+        }
+    }
+
+
+    /**
+     * 在setData前设置
+     *
+     * @param layoutManage
+     */
+    public void setLayoutManage(RecyclerView.LayoutManager layoutManage) {
+        rvMyDataView.setLayoutManager(layoutManage);
+    }
+
+    /**
+     * 在setData前设置
+     * 是否能刷新
+     *
+     * @param loadMore true    false
+     */
+    public void canLoadMore(boolean loadMore) {
+        t.setCanLoad(loadMore);
+        slReFreshView.setEnabled(loadMore);
+
+    }
+
     public void setData(List data) {
+
+        message = new Message();
+        if (data == null) {
+            message.what = NODATA;
+            handler.sendMessage(message);
+            return;
+        }
         try {
             this.t.setData(data);
-            message = new Message();
             message.obj = data;
             message.what = REFRESH;
             handler.sendMessage(message);
-        } catch (NullPointerException e) {
-            Log.d("zww", "适配器为空");
         } catch (ClassCastException e) {
             Log.d("zww", "类型转换异常");
         }

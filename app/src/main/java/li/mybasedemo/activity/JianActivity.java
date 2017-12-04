@@ -25,6 +25,7 @@ public class JianActivity extends BaseActivity {
 
     @Override
     public int getLayoutId() {
+        setFullScreen();
         return R.layout.activity_jian;
     }
 

@@ -21,8 +21,8 @@ import li.zwbase.R;
  * 创建人: Administrator
  * 功能描述:RecyclerView基类(需要注意类型转换问题)
  */
-public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseRecyclerViewAdapter.BaseViewHolder> {
-    protected ArrayList data;
+public abstract class BaseRecyclerViewAdapter<T> extends RecyclerView.Adapter {
+    protected ArrayList<T> data;
     protected Context context;
     protected List<Integer> layoutIds;//布局集合
     protected boolean isMore = true;//上拉刷新时，是否有更多数据
@@ -35,7 +35,7 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
      * @param context   上下文对象
      * @param layoutIds 布局集合
      */
-    public BaseRecyclerViewAdapter(List data, Context context, List<Integer> layoutIds) {
+    public BaseRecyclerViewAdapter(List<T> data, Context context, List<Integer> layoutIds) {
         this.data = new ArrayList<>();
         this.layoutIds = new ArrayList<>();
         this.data.addAll(data);
@@ -61,12 +61,12 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         return data.get(index);
     }
 
-    public void addData(Object t) {
+    public void addData(T t) {
         data.add(t);
         notifyDataSetChanged();
     }
 
-    public void addDatas(List data) {
+    public void addDatas(List<T> data) {
         this.data.addAll(data);
         notifyDataSetChanged();
     }
@@ -105,6 +105,35 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         return baseViewHolder;
     }
 
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+        BaseViewHolder holder = (BaseViewHolder) viewHolder;
+        if (data.size() == 0) {
+            ImageView nodataImage = (ImageView) holder.getViewById(R.id.zwbase_imageview);
+            TextView nodataText = (TextView) holder.getViewById(R.id.zwbase_tvNoData);
+            setNodataInfo(nodataImage, nodataText);
+            return;
+        }
+        if (holder instanceof BaseRecyclerViewAdapter.FootViewHolder) {
+            //判断为底部布局时
+            if (isMore) {//再次判断是否还有更多数据,加载相应的布局
+                holder.getViewById(R.id.loadmore).setVisibility(View.VISIBLE);
+                holder.getViewById(R.id.nodata).setVisibility(View.GONE);
+            } else {
+                holder.getViewById(R.id.loadmore).setVisibility(View.GONE);
+                holder.getViewById(R.id.nodata).setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+        try {
+
+            onBind(holder, data.get(position), position);//设置显示数据
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     /**
      * 定制要显示的布局
      *
@@ -130,36 +159,9 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
      * @param o              itme    实体类
      * @param pos            位置
      */
-    protected abstract void onCreate(BaseViewHolder baseViewHolder, Object o, int pos);
+    protected abstract void onCreate(BaseViewHolder baseViewHolder, T o, int pos);
 
-    protected abstract void onBind(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException;
-
-    @Override
-    public void onBindViewHolder(BaseViewHolder holder, int position) {
-        if (data.size() == 0) {
-            ImageView nodataImage = (ImageView) holder.getViewById(R.id.zwbase_imageview);
-            TextView nodataText = (TextView) holder.getViewById(R.id.zwbase_tvNoData);
-            setNodataInfo(nodataImage, nodataText);
-            return;
-        }
-        if (holder instanceof FootViewHolder) {
-            //判断为底部布局时
-            if (isMore) {//再次判断是否还有更多数据,加载相应的布局
-                holder.getViewById(R.id.loadmore).setVisibility(View.VISIBLE);
-                holder.getViewById(R.id.nodata).setVisibility(View.GONE);
-            } else {
-                holder.getViewById(R.id.loadmore).setVisibility(View.GONE);
-                holder.getViewById(R.id.nodata).setVisibility(View.VISIBLE);
-            }
-            return;
-        }
-        try {
-
-            onBind(holder, data.get(position), position);//设置显示数据
-        } catch (ClassCastException e) {
-            e.printStackTrace();
-        }
-    }
+    protected abstract void onBind(BaseViewHolder baseViewHolder, T itmeModule, int position);
 
     protected void setNodataInfo(ImageView nodataImage, TextView nodataText) {
     }
@@ -171,6 +173,11 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         else return data == null ? 0 : data.size();
     }
 
+    /**
+     * 是否有更多数据
+     *
+     * @param more 指定参数
+     */
     public void setMore(boolean more) {
         //暴露方法给Activity
         this.isMore = more;
@@ -182,6 +189,11 @@ public abstract class BaseRecyclerViewAdapter extends RecyclerView.Adapter<BaseR
         }
     }
 
+    /**
+     * 设置是否可以加载更多，底部布局
+     *
+     * @param canLoad 指定参数
+     */
     public void setCanLoad(boolean canLoad) {
         this.canLoad = canLoad;
     }

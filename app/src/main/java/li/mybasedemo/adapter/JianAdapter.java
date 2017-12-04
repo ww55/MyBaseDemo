@@ -75,22 +75,56 @@ public class JianAdapter extends BaseRecyclerViewAdapter implements View.OnClick
         int layoutNum = (pos % layoutIds.size());
         switch (layoutNum) {
             case 0:
-                cardAdapter = new CardAdapter(headResources, context, cardLayouts);
-                cardAdapter.setCanLoad(false);
-                cardView = (RecyclerView) baseViewHolder.getViewById(R.id.zvCardView);
-                cardView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, true));
-                cardView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-                cardView.setAdapter(cardAdapter);
-                TextView textView = (TextView) baseViewHolder.getViewById(R.id.tvRefreshen);
-                textView.setOnClickListener(this);
-                authAnimatable = (Animatable) textView.getCompoundDrawables()[0];
+                initCardViewInfo(baseViewHolder, o, pos);
                 break;
             case 1:
-                RecyclerView recyclerView = (RecyclerView) baseViewHolder.getViewById(R.id.list);
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-
+                initDataViewInfo(baseViewHolder, o, pos);
                 break;
         }
+    }
+
+    private void initDataViewInfo(BaseViewHolder baseViewHolder, Object o, int pos) {
+        RecyclerView recyclerView = (RecyclerView) baseViewHolder.getViewById(R.id.list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        lastViewAdapter = new BaseRecyclerViewAdapter(headResources, context, listLayout) {
+            @Override
+            protected void onCreate(BaseViewHolder baseViewHolder, Object o, int pos) {
+
+            }
+
+            @Override
+            protected void onBind(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException {
+                baseViewHolder.setText(R.id.tvText, "sssss");
+            }
+        };
+        recyclerView.setAdapter(lastViewAdapter);
+        recyclerView.setFocusable(true);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                Log.d("zww", "jian onScrollStateChanged");
+                if (isSlideToBottom(recyclerView) && newState == 0
+                        ) {
+                    for (int i = 0; i < 11; i++) {
+                        headResources.add(R.drawable.head);
+                    }
+                    lastViewAdapter.setData(headResources);
+                }
+            }
+        });
+    }
+
+    private void initCardViewInfo(BaseViewHolder baseViewHolder, Object o, int pos) {
+        cardAdapter = new CardAdapter(headResources, context, cardLayouts);
+        cardAdapter.setCanLoad(false);
+        cardView = (RecyclerView) baseViewHolder.getViewById(R.id.zvCardView);
+        cardView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, true));
+        cardView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
+        cardView.setAdapter(cardAdapter);
+        TextView textView = (TextView) baseViewHolder.getViewById(R.id.tvRefreshen);
+        textView.setOnClickListener(this);
+        authAnimatable = (Animatable) textView.getCompoundDrawables()[0];
     }
 
     @Override
@@ -100,21 +134,6 @@ public class JianAdapter extends BaseRecyclerViewAdapter implements View.OnClick
             case 0:
                 break;
             case 1:
-                RecyclerView recyclerView = (RecyclerView) baseViewHolder.getViewById(R.id.list);
-                recyclerView.setFocusable(true);
-                lastViewAdapter = new BaseRecyclerViewAdapter(headResources, context, listLayout) {
-                    @Override
-                    protected void onCreate(BaseViewHolder baseViewHolder, Object o, int pos) {
-
-                    }
-
-                    @Override
-                    protected void onBind(BaseViewHolder baseViewHolder, Object itmeModule, int position) throws ClassCastException {
-                        baseViewHolder.setText(R.id.tvText, "sssss");
-                    }
-                };
-                lastViewAdapter.setCanLoad(false);
-                recyclerView.setAdapter(lastViewAdapter);
                 break;
         }
     }
@@ -165,5 +184,13 @@ public class JianAdapter extends BaseRecyclerViewAdapter implements View.OnClick
         message.obj = headResources;
         message.what = LOADMORESUCEEE;
         handler.sendMessage(message);
+    }
+
+    public boolean isSlideToBottom(RecyclerView recyclerView) {
+        if (recyclerView == null) return false;
+        if (recyclerView.computeVerticalScrollExtent() + recyclerView.computeVerticalScrollOffset()
+                >= recyclerView.computeVerticalScrollRange())
+            return true;
+        return false;
     }
 }

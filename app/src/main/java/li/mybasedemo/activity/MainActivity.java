@@ -44,6 +44,7 @@ public class MainActivity extends BaseActivity {
         layoutIds = new ArrayList<>();
         layoutIds.add(R.layout.layout_rvitme);
         data.add("简书首页");
+        data.add("RXJAVA");
         baseRecyclerViewAdapter = new MyAdapter(data, this, layoutIds);
         myRview.setFresh(new ZwFreshenView.Fresh() {
             @Override

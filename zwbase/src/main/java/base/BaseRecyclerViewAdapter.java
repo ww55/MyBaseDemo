@@ -1,236 +1,179 @@
 package base;
 
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import li.zwbase.R;
 
 /**
  * 创建时间: 2017/11/29
  * 创建人: Administrator
- * 功能描述:RecyclerView基类(需要注意类型转换问题)
+ * 功能描述:RecyclerView基类
  */
-public abstract class BaseRecyclerViewAdapter<T> extends RecyclerView.Adapter {
-    protected ArrayList<T> data;
-    protected Context context;
-    protected List<Integer> layoutIds;//布局集合
-    protected boolean isMore = true;//上拉刷新时，是否有更多数据
-    private boolean canLoad = true;
+public abstract class BaseRecyclerViewAdapter<T> extends RecyclerView.Adapter<BaseRecyclerViewAdapter.BaseViewHolder> {
 
-    /**
-     * 适配器构造方法 #注意List
-     *
-     * @param data      数据集合
-     * @param context   上下文对象
-     * @param layoutIds 布局集合
-     */
-    public BaseRecyclerViewAdapter(List<T> data, Context context, List<Integer> layoutIds) {
-        this.data = new ArrayList<>();
-        this.layoutIds = new ArrayList<>();
-        this.data.addAll(data);
-        this.layoutIds.addAll(layoutIds);
-        this.context = context;
+
+    protected List<T> datas;
+    protected boolean isShowFoot;
+    protected boolean isMore = true;
+    private static final int FOOTVIEWTYPE = -12;
+    public BaseRecyclerViewAdapter(List<T> datas) {
+        this.datas = datas;
     }
 
-    public void setData(List data) {
-        this.data.clear();
-        this.data.addAll(data);
-        notifyDataSetChanged();
+    public boolean isShowFoot() {
+        return isShowFoot;
     }
 
-    public void clearAll() {
-        this.data.clear();
-        notifyDataSetChanged();
+    public void setShowFoot(boolean showFoot) {
+        isShowFoot = showFoot;
     }
 
-    public Object getDataByPos(int index) {
-        if (data.size() <= index) {
-            return null;
+    public boolean isMore() {
+        return isMore;
+    }
+
+    public void setMore(boolean more) {
+        isMore = more;
+    }
+
+    @Override
+    public BaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view;
+        if (getItemCount() == 0) {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.zwbase_no_data, parent, false);
+        } else if (isShowFoot && viewType == FOOTVIEWTYPE) {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.zwbase_footlayout, parent, false);
+
+        } else {
+            view = LayoutInflater.from(parent.getContext()).inflate(getLayoutIdByViewType(viewType), parent, false);
+
         }
-        return data.get(index);
-    }
-
-    public void addData(T t) {
-        data.add(t);
-        notifyDataSetChanged();
-    }
-
-    public void addDatas(List<T> data) {
-        this.data.addAll(data);
-        notifyDataSetChanged();
+        return new BaseViewHolder(view);
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (canLoad) {
-            if (position + 1 == getItemCount()) {
-                return -1;//最后行时设为-1显示footLayout
-            } else {
-                return position;//其他设为位置
-            }
-        } else {
-            return position;
+        if (isShowFoot && datas.size() == position + 2) {
+            return FOOTVIEWTYPE;
         }
-
+        return super.getItemViewType(position);
     }
 
     @Override
-    public BaseViewHolder onCreateViewHolder(ViewGroup parent, int pos) {
-        Log.d("zww", "onCreateViewHolder " + pos);
-        if (data.size() == 0) {//当data数据为0时
-            View view = LayoutInflater.from(context).inflate(R.layout.zwbase_no_data, parent, false);
-            //显示暂无数据布局
-            return new BaseViewHolder(view);
-        }
-        if (pos == -1) {//pos为-1表示最后一行
-            View view = LayoutInflater.from(context).inflate(R.layout.zwbase_footlayout, parent, false);
-            //显示底部布局
-            return new FootViewHolder(view);
-        }
-        int layout = getLayoutIdByPos(pos);
-        View view = LayoutInflater.from(context).inflate(layout, parent, false);
-        BaseViewHolder baseViewHolder = new BaseViewHolder(view);
-        onCreate(baseViewHolder, data.get(pos), pos);
-        return baseViewHolder;
-    }
-
-    @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-        BaseViewHolder holder = (BaseViewHolder) viewHolder;
-        if (data.size() == 0) {
-            ImageView nodataImage = (ImageView) holder.getViewById(R.id.zwbase_imageview);
-            TextView nodataText = (TextView) holder.getViewById(R.id.zwbase_tvNoData);
-            setNodataInfo(nodataImage, nodataText);
+    public void onBindViewHolder(BaseRecyclerViewAdapter.BaseViewHolder holder, final int position) {
+        if (getItemCount() == 0) {
             return;
         }
-        if (holder instanceof BaseRecyclerViewAdapter.FootViewHolder) {
-            //判断为底部布局时
-            if (isMore) {//再次判断是否还有更多数据,加载相应的布局
-                holder.getViewById(R.id.loadmore).setVisibility(View.VISIBLE);
-                holder.getViewById(R.id.nodata).setVisibility(View.GONE);
-            } else {
-                holder.getViewById(R.id.loadmore).setVisibility(View.GONE);
-                holder.getViewById(R.id.nodata).setVisibility(View.VISIBLE);
-            }
+        if (datas.size() == position + 2) {
+            setFootViewStyle(holder);
             return;
         }
-        try {
-
-            onBind(holder, data.get(position), position);//设置显示数据
-        } catch (ClassCastException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * 定制要显示的布局
-     *
-     * @param pos 位置
-     * @return 对应顺序下返回的布局
-     */
-    protected int getLayoutIdByPos(int pos) {
-        int res = 0;
-        if (pos < layoutIds.size()) {//layoutIds是存放布局的集合
-            res = layoutIds.get(pos);
-        } else {
-            res = layoutIds.get(pos % layoutIds.size());
-        }
-        return res;
+        bindData(holder, position);
     }
 
 
     /**
-     * 在oncreateViewHolder方法中设置点击事件
-     * 避免重复调用
+     * 刷新数据
      *
-     * @param baseViewHolder itme控件
-     * @param o              itme    实体类
-     * @param pos            位置
+     * @param datas
      */
-    protected abstract void onCreate(BaseViewHolder baseViewHolder, T o, int pos);
-
-    protected abstract void onBind(BaseViewHolder baseViewHolder, T itmeModule, int position);
-
-    protected void setNodataInfo(ImageView nodataImage, TextView nodataText) {
+    public void refresh(List<T> datas) {
+        this.datas.clear();
+        this.datas.addAll(datas);
+        notifyDataSetChanged();
     }
+
+
+    /**
+     * 添加数据
+     *
+     * @param datas
+     */
+    public void addData(List<T> datas) {
+        this.datas.addAll(datas);
+        notifyDataSetChanged();
+    }
+
+    /**
+     * 绑定数据
+     *
+     * @param holder   具体的viewHolder
+     * @param position 对应的索引
+     */
+    protected abstract void bindData(BaseViewHolder holder, int position);
 
 
     @Override
     public int getItemCount() {
-        if (canLoad) return data == null ? 0 : data.size() + 1;//数据为0或为空时返回0，否则data.size()+1
-        else return data == null ? 0 : data.size();
+        return datas == null ? 0 : isShowFoot ? datas.size() + 1 : datas.size();
     }
 
-    /**
-     * 是否有更多数据
-     *
-     * @param more 指定参数
-     */
-    public void setMore(boolean more) {
-        //暴露方法给Activity
-        this.isMore = more;
-    }
+    public void setFootViewStyle(BaseViewHolder footViewStyle) {
+        if (isMore) {
+            footViewStyle.getView(R.id.pbLoadView).setVisibility(View.VISIBLE);
+            ((TextView) footViewStyle.getView(R.id.tvFootContent)).setText("加载中...");
+        } else {
+            footViewStyle.getView(R.id.pbLoadView).setVisibility(View.GONE);
+            ((TextView) footViewStyle.getView(R.id.tvFootContent)).setText("——我是有底线的——");
 
-    protected class FootViewHolder extends BaseViewHolder {
-        public FootViewHolder(View itemView) {
-            super(itemView);
         }
     }
 
-    /**
-     * 设置是否可以加载更多，底部布局
-     *
-     * @param canLoad 指定参数
-     */
-    public void setCanLoad(boolean canLoad) {
-        this.canLoad = canLoad;
-    }
 
+    /**
+     * 封装ViewHolder ,子类可以直接使用
+     */
     public class BaseViewHolder extends RecyclerView.ViewHolder {
-        //该类下部分方法可以自行添加
-        View rootView;
+
+
+        private Map<Integer, View> mViewMap;
 
         public BaseViewHolder(View itemView) {
             super(itemView);
-            rootView = itemView;
+            mViewMap = new HashMap<>();
         }
 
-        public void setText(int viewId, int resourceId) {
-            ((TextView) getViewById(viewId)).setText(resourceId);
+        /**
+         * 获取设置的view
+         *
+         * @param id
+         * @return
+         */
+        public View getView(int id) {
+            View view = mViewMap.get(id);
+            if (view == null) {
+                view = itemView.findViewById(id);
+                mViewMap.put(id, view);
+            }
+            return view;
         }
+    }
 
-        public void setClickListent(int viewId, View.OnClickListener onClickListener) {
-            getViewById(viewId).setOnClickListener(onClickListener);
-        }
+    /**
+     * 获取子item
+     *
+     * @return
+     */
+    public abstract int getLayoutIdByViewType(int viewType);
 
-        public void setText(int viewId, String content) {
-            ((TextView) getViewById(viewId)).setText(content);
-        }
 
-        public void setCheckChangeListen(int viewId, CompoundButton.OnCheckedChangeListener onCheckedChangeListener) {
-            ((CheckBox) getViewById(viewId)).setOnCheckedChangeListener(onCheckedChangeListener);
-        }
-
-        public void setImageSource(int imageViewId, int sourceId) {
-            ImageView imageView = (ImageView) getViewById(imageViewId);
-            imageView.setImageResource(sourceId);
-        }
-
-        public View getViewById(int viewId) {
-            return rootView.findViewById(viewId);
+    /**
+     * 设置文本属性
+     *
+     * @param view
+     * @param text
+     */
+    public void setItemText(View view, String text) {
+        if (view instanceof TextView) {
+            ((TextView) view).setText(text);
         }
     }
 }
-
